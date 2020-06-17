@@ -8,7 +8,6 @@ import csv
 NGINX_LOG_DIR = os.path.join(os.getcwd(), 'nginx_log_dir')
 RESULT_FILE = os.path.join(os.getcwd(), 'nginx_log.csv')
 
-
 def get_access_log_list(nginx_log_dir):
 	access_log_list = []
 	ip_pattern = re.compile("^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
@@ -45,8 +44,21 @@ def get_short_country_name(uniq_ip):
 	
 	return str(short_country).rstrip("\n") if short_country else "NONE"
 
+def get_num_count():
+	if os.path.isfile(RESULT_FILE):
+		
+		with open(RESULT_FILE, 'r') as alf:
+			reader = csv.DictReader(alf)
+			last_row = [r for r in reader]
 
-def read_access_log_file(access_log_file):
+			if last_row:
+			    row_last_element = list(last_row[-1].values())[0]
+			    num_count = row_last_element.split(' ')[0]
+
+			    if num_count.isdigit():
+			    	return int(num_count)
+
+def read_access_log_file(access_log_file, num_count=0):
 	ipaddress_list = []
 	user_agent = []
 	data_combain = {}
@@ -55,10 +67,7 @@ def read_access_log_file(access_log_file):
 		alf_data = alf.readlines()
 		ipaddress_list = set([ alfr.split(' ')[0] for alfr in alf_data ])
 
-		num_count = 0
-
 		for uil in ipaddress_list:
-
 			num_count +=1
 
 			try:
@@ -75,7 +84,7 @@ def read_access_log_file(access_log_file):
 			    'ipaddress': uil,
 			    'user_agent': " ".join((set(user_agent))) if " ".join((set(user_agent))) else "NONE",
 			    'total_user_agent': len(user_agent),
-			    'request_url': "".join((set(request_url))) if "".join((set(request_url))) else "NONE",
+			    'request_url': " ".join((set(request_url))) if " ".join((set(request_url))) else "NONE",
 			    'total_request_url': len(request_url),
 			    'client_country': short_country_name
 			    }
@@ -86,21 +95,25 @@ def writerow_to_csv(access_log_file):
 	with open(RESULT_FILE, "a") as alf:
 		fieldnames = ['#', 'ipaddress', 'user_agent', 'total_user_agent', 'request_url', 'total_request_url', 'client_country']
 		alf_writer = csv.DictWriter(alf, delimiter=' ', fieldnames=fieldnames)
-		alf_writer.writeheader()
-
-		for ralfv in read_access_log_file(access_log_file).values():
-			alf_writer.writerow(ralfv)
+		if get_num_count():
+			num_count = get_num_count()
+			for ralfv in read_access_log_file(access_log_file, num_count).values():
+				alf_writer.writerow(ralfv)
+		else:
+			alf_writer.writeheader()
+			for ralfv in read_access_log_file(access_log_file).values():
+				alf_writer.writerow(ralfv)
 
 def main():
 
 
-	print(f"start: {datetime.datetime.now()}")
+	print(f"start:\t{datetime.datetime.now()}")
 	
 	for access_log_file in get_access_log_list(NGINX_LOG_DIR):
 		print(f"run for: {access_log_file}")
 		writerow_to_csv(access_log_file)
 
-	print(f"stop: {datetime.datetime.now()}")
+	print(f"stop:\t{datetime.datetime.now()}")
 
 
 if __name__ == '__main__':
