@@ -9,3 +9,11 @@ Obtaining IP from an **Nginx** access log file, an user agent, a list of links a
 ## Piggy bank
 
 piggy bank, count in **%** how much is put in the piggy bank from the target, how many are in the piggy bank.
+
+## service_checker
+
+Check service status.
+Checking every PERIOD minutes service status declaring in settings.py list.
+If service not started, then script trying automaticaly restarting it
+and sending message on email.
+

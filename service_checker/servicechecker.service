@@ -1,0 +1,10 @@
+[Unit]
+Description=Start up for the Service Checker
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/servicechecker.sh
+PIDFile=/var/run/servicechecker.pid
+
+[Install]
+WantedBy=multi-user.target
