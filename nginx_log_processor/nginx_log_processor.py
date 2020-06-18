@@ -44,6 +44,14 @@ def get_short_country_name(uniq_ip):
 	
 	return str(short_country).rstrip("\n") if short_country else "NONE"
 
+def get_nmap_open_port_by_ip(uniq_ip):
+	nmap_cmd = [f"/usr/bin/nmap -Pn -F {uniq_ip} | grep -i 'open'"]
+	process_nmap = subprocess.Popen(nmap_cmd, stdout=subprocess.PIPE, shell=True)
+	open_port = ["".join(op.split(' ')[0]) for op in process_nmap.communicate()[0].decode('utf-8').split('\n') if op]
+	process_nmap.stdout.close()
+
+	return str(open_port) if open_port else "NONE"
+
 def get_num_count():
 	if os.path.isfile(RESULT_FILE):
 		
@@ -58,7 +66,7 @@ def get_num_count():
 			    if num_count.isdigit():
 			    	return int(num_count)
 
-def read_access_log_file(access_log_file, num_count=0):
+def processing_log_file(access_log_file, num_count=0):
 	ipaddress_list = []
 	user_agent = []
 	data_combain = {}
@@ -75,9 +83,10 @@ def read_access_log_file(access_log_file, num_count=0):
 			    user_agent = [" ".join(alfr.split(' ')[11:-1]) for alfr in alf_data if uil == alfr.split(' ')[0]]
 			    request_url = [alfr.split(' ')[6] + ', ' for alfr in alf_data if uil == alfr.split(' ')[0]]
 			    short_country_name = get_short_country_name(uil).upper()
-			
+			    			
 			except Exception as e:
 				print(e)
+
 
 			data_combain[uil] = {
 			    '#': num_count,
@@ -86,22 +95,23 @@ def read_access_log_file(access_log_file, num_count=0):
 			    'total_user_agent': len(user_agent),
 			    'request_url': " ".join((set(request_url))) if " ".join((set(request_url))) else "NONE",
 			    'total_request_url': len(request_url),
-			    'client_country': short_country_name
+			    'client_country': short_country_name,
+			    'open_port': get_nmap_open_port_by_ip(uil)
 			    }
 
 	return data_combain
 
 def writerow_to_csv(access_log_file):
 	with open(RESULT_FILE, "a") as alf:
-		fieldnames = ['#', 'ipaddress', 'user_agent', 'total_user_agent', 'request_url', 'total_request_url', 'client_country']
+		fieldnames = ['#', 'ipaddress', 'user_agent', 'total_user_agent', 'request_url', 'total_request_url', 'client_country', 'open_port']
 		alf_writer = csv.DictWriter(alf, delimiter=' ', fieldnames=fieldnames)
 		if get_num_count():
 			num_count = get_num_count()
-			for ralfv in read_access_log_file(access_log_file, num_count).values():
+			for ralfv in processing_log_file(access_log_file, num_count).values():
 				alf_writer.writerow(ralfv)
 		else:
 			alf_writer.writeheader()
-			for ralfv in read_access_log_file(access_log_file).values():
+			for ralfv in processing_log_file(access_log_file).values():
 				alf_writer.writerow(ralfv)
 
 def main():
