@@ -9,7 +9,7 @@ from multiprocessing import Pool
 NGINX_LOG_DIR = os.path.join(os.getcwd(), 'nginx_log_dir')
 RESULT_FILE = os.path.join(os.getcwd(), 'nginx_log.csv')
 LOG_FILE_SIZE = 1024
-MP_POOL_NUM = 8
+MP_POOL_NUM = 18
 
 
 def get_access_log_list(nginx_log_dir):
@@ -48,6 +48,13 @@ def get_short_country_name(uniq_ip):
 	
 	return uniq_ip, str(short_country).rstrip("\n") if short_country else "NONE"
 
+def get_nmap_open_port_by_ip(uniq_ip):
+	nmap_cmd = [f"/usr/bin/nmap -Pn -F {uniq_ip} | grep -i 'open'"]
+	process_nmap = subprocess.Popen(nmap_cmd, stdout=subprocess.PIPE, shell=True)
+	open_port = ["".join(op.split(' ')[0]) for op in process_nmap.communicate()[0].decode('utf-8').split('\n') if op]
+	process_nmap.stdout.close()
+
+	return uniq_ip, str(open_port) if open_port else "NONE"
 
 def read_access_log_file(access_log_file):
 	ipaddress_list = []
@@ -79,20 +86,27 @@ def read_access_log_file(access_log_file):
 			    'total_user_agent': len(user_agent),
 			    'request_url': "".join((set(request_url))) if "".join((set(request_url))) else "NONE",
 			    'total_request_url': len(request_url),
+			    'open_port': '',
 			    'client_country': ''
 			    }
 
 	return data_combain
 
-def writerow_to_csv(access_log_file, all_ip):
+def writerow_to_csv(access_log_file, all_ip, all_port):
 	with open(RESULT_FILE, "a") as alf:
-		fieldnames = ['#', 'ipaddress', 'user_agent', 'total_user_agent', 'request_url', 'total_request_url', 'client_country']
+		fieldnames = ['#', 'ipaddress', 'user_agent', 'total_user_agent', 'request_url', 'total_request_url', 'open_port', 'client_country']
 		alf_writer = csv.DictWriter(alf, delimiter=' ', fieldnames=fieldnames)
 		alf_writer.writeheader()
 
 		for ralfv in read_access_log_file(access_log_file).values():
 			ralfv['client_country'] = [
 			    "".join(aip[1].replace('\r', '')).upper() for aip in all_ip[0] if aip[0] == ralfv.get('ipaddress')]
+			ralfv['open_port'] = [
+			    "".join(apo[1]) for apo in all_port[0] if apo[0] == ralfv.get('ipaddress')]
+			print(ralfv.get('ipaddress'))
+			print(ralfv.get('open_port'))
+			print()
+			print()
 			alf_writer.writerow(ralfv)
 
 
@@ -102,16 +116,21 @@ def main():
 	print(f"start: {datetime.datetime.now()}")
 	
 
-	p = Pool(MP_POOL_NUM)
+	pool_to_ip = Pool(MP_POOL_NUM)
+	pool_to_port = Pool(MP_POOL_NUM)
 	all_ip = []
+	all_port = []
 	for access_log_file in get_access_log_list(NGINX_LOG_DIR):
 		with open(access_log_file, 'r') as alf:
 			alf_data = alf.readlines()
 			ipaddress_list = set([ alfr.split(' ')[0] for alfr in alf_data ])
-			all_ip.append(p.map(get_short_country_name, ipaddress_list))
+			all_ip.append(pool_to_ip.map(get_short_country_name, ipaddress_list))
+			all_port.append(pool_to_port.map(get_nmap_open_port_by_ip, ipaddress_list))
+		print(all_port)
+
 		
 		print(f"run for: {access_log_file}")
-		writerow_to_csv(access_log_file, all_ip)
+		writerow_to_csv(access_log_file, all_ip, all_port)
 
 	print(f"stop: {datetime.datetime.now()}")
 
