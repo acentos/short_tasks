@@ -10,7 +10,7 @@ Obtaining IP from an **Nginx** access log file, an user agent, a list of links a
 
 piggy bank, count in **%** how much is put in the piggy bank from the target, how many are in the piggy bank.
 
-## service_checker
+## Service Checker
 
 Check service status.
 Checking every PERIOD minutes service status declaring in settings.py list.
