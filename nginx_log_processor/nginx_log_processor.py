@@ -3,6 +3,7 @@ import datetime
 import re
 import subprocess
 import csv
+import ipaddress
 from multiprocessing import Pool
 
 
@@ -131,7 +132,7 @@ def writerow_to_csv(access_log_file, all_ip, all_port):
 def main():
 
 
-	print(f"start: {datetime.datetime.now()}")
+	print(f"Start: {datetime.datetime.now()}")
 	
 
 	pool_to_ip = Pool(MP_POOL_NUM)
@@ -141,14 +142,14 @@ def main():
 	for access_log_file in get_access_log_list(NGINX_LOG_DIR):
 		with open(access_log_file, 'r') as alf:
 			alf_data = alf.readlines()
-			ipaddress_list = set([ alfr.split(' ')[0] for alfr in alf_data ])
+			ipaddress_list = set([ alfr.split(' ')[0] for alfr in alf_data if ipaddress.ip_address(alfr.split(' ')[0]) ])
 			all_ip.append(pool_to_ip.map(get_short_country_name, ipaddress_list))
 			all_port.append(pool_to_port.map(get_nmap_open_port_by_ip, ipaddress_list))
 		
 		print(f"run for: {access_log_file}")
 		writerow_to_csv(access_log_file, all_ip, all_port)
 
-	print(f"stop: {datetime.datetime.now()}")
+	print(f"Stop: {datetime.datetime.now()}")
 
 
 if __name__ == '__main__':
