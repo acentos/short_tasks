@@ -26,3 +26,7 @@ and sending message on email.
 ## Scan local network
 
 **Bash**: The script with the help **arp-scan** and **nmap** checks hosts on the local network. The result is saved in a separate directory.
+
+## Vocabulary parser
+
+**Python**: Fast get and save words from html file.
