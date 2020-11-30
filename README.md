@@ -30,3 +30,7 @@ and sending message on email.
 ## Vocabulary parser
 **Python**: Parse .html file from llc site vocabulary.
 **Python**: Get words and save to .csv file from llc site vocabulary using a **Selenium**.
+
+
+## COVID19 cases
+**Python**: Get statistics from **csv** file and generate a graph using **matplotlib**.
