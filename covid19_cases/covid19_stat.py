@@ -1,14 +1,16 @@
-import os
+import sys
 import csv
 import matplotlib.pyplot as plt
 
 
-stat_file = 'COVID19_UA_statistic_November2020.csv'
-stat_file_path = os.path.join('files', stat_file)
+if sys.argv[1:]:
+    stat_file = sys.argv[1]
+else:
+    sys.exit("E: $python covid19_stat.py files/COVID19_UA_statistic_December2020.csv")
 
 stat_lines = []
 
-with open(stat_file_path, 'r') as csv_file:
+with open(stat_file, 'r') as csv_file:
     csv_reader = csv.reader(csv_file, delimiter=',')
     stat_lines = [cr for cr in csv_reader]
 
@@ -19,11 +21,11 @@ month_names = ["Январь", "Февраль", "Март", "Апрель", "М
 "Июль", "Август", "Сентябрь","Октябрь", "Ноябрь", "Декабрь"]
 current_month = month_names[int(stat_lines[0][0].split('.')[1]) - 1]
 
-days = [sl[0].split('.')[0] for sl in stat_lines][1:]
-new_cases = [int(sl[1]) for sl in stat_lines][1:]
-recovered =  [int(sl[2]) for sl in stat_lines][1:]
-hospitalized = [int(sl[3]) for sl in stat_lines][1:]
-deaths = [int(sl[4]) for sl in stat_lines][1:]
+days = [sl[0].split('.')[0] for sl in stat_lines]
+new_cases = [int(sl[1]) for sl in stat_lines]
+recovered =  [int(sl[2]) for sl in stat_lines]
+hospitalized = [int(sl[3]) for sl in stat_lines]
+deaths = [int(sl[4]) for sl in stat_lines]
 
 plt.plot(days, new_cases, marker='o', color='red')
 plt.plot(days, hospitalized, marker='o', color='yellow')
