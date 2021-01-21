@@ -36,5 +36,3 @@ and sending message on email.
 
 ## Eagle and tails
 **Golang**: eagle and tails.
-
-## Test
