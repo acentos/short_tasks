@@ -2,7 +2,20 @@
 
 RPACK="arp-scan nmap";
 INTERFACE=`ifconfig | awk '{print $1}' | grep ":" | grep -Ev "lo|tun" | sed 's/.$//'`
-RESULT_DIRECTORY="result"
+RESULT_DIRECTORY="scan_results_$(date +%Y-%m-%d_%H-%M-%S)"
+
+function directory_check () {
+    if [ ! -d "$RESULT_DIRECTORY" ];
+    then
+        mkdir $RESULT_DIRECTORY;
+    fi
+    
+    if [ ! -d "$RESULT_DIRECTORY" ];
+    then
+        echo "Directory ERROR.";
+        exit 0;
+    fi
+}
 
 for i in $RPACK;
 do
@@ -13,11 +26,7 @@ do
     fi
 done
 
-if [ ! -d "$RESULT_DIRECTORY" ];
-then
-    mkdir $RESULT_DIRECTORY;
-fi
-
+directory_check;
 
 for i in ${INTERFACE};
 do
@@ -29,6 +38,7 @@ do
         ping -c 2 $as > /dev/null;
         if [ $? -eq 0 ];
         then
+            directory_check;
             echo -e ">>> hostname: $as\n";
             nmap -A $as >> $RESULT_DIRECTORY/${as}_$(date +%Y-%m-%d_%H-%M-%S).txt;
         fi
